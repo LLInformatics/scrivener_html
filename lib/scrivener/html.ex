@@ -1,16 +1,14 @@
 defmodule Scrivener.HTML do
-  import Phoenix.HTML
-  use PhoenixHTMLHelpers
   @defaults [view_style: :bootstrap, action: :index, page_param: :page, hide_single: false]
-  @view_styles [:bootstrap, :semantic, :foundation, :bootstrap_v4, :materialize, :bulma]
+  # @view_styles [:bootstrap, :semantic, :foundation, :bootstrap_v4, :materialize, :bulma]
   @raw_defaults [
     distance: 5,
     next: ">>",
     previous: "<<",
     first: true,
     last: true,
-    ellipsis: raw("&hellip;")
-  ]
+    ellipsis: {:safe, "&hellip;"}]
+
   @moduledoc """
   For use with Phoenix.HTML, configure the `:routes_helper` module like the following:
 
@@ -50,16 +48,16 @@ defmodule Scrivener.HTML do
   end
 
   defmodule Default do
-    @doc ~S"""
-    Default path function when none provided. Used when automatic path function
-    resolution cannot be performed.
+    # @doc ~S"""
+    # Default path function when none provided. Used when automatic path function
+    # resolution cannot be performed.
 
-        iex> Scrivener.HTML.Default.path(%Plug.Conn{}, :index, page: 4)
-        "?page=4"
-    """
-    def path(_conn, _action, opts \\ []) do
-      "?" <> Plug.Conn.Query.encode(opts)
-    end
+    #     iex> Scrivener.HTML.Default.path(%Plug.Conn{}, :index, page: 4)
+    #     "?page=4"
+    # """
+    # def path(_conn, _action, opts \\ []) do
+    #   "?" <> Plug.Conn.Query.encode(opts)
+    # end
   end
 
   @doc ~S"""
@@ -102,339 +100,339 @@ defmodule Scrivener.HTML do
   because the `page` parameter will always be supplied. If you supply the wrong function you will receive a
   function undefined exception.
   """
-  def pagination_links(conn, paginator, args, opts) do
-    opts =
-      Keyword.merge(opts,
-        view_style:
-          opts[:view_style] || Application.get_env(:scrivener_html, :view_style, :bootstrap)
-      )
-      |> Keyword.merge(
-        hide_single:
-          opts[:hide_single] || Application.get_env(:scrivener_html, :hide_single, false)
-      )
+  # def pagination_links(conn, paginator, args, opts) do
+  #   opts =
+  #     Keyword.merge(opts,
+  #       view_style:
+  #         opts[:view_style] || Application.get_env(:scrivener_html, :view_style, :bootstrap)
+  #     )
+  #     |> Keyword.merge(
+  #       hide_single:
+  #         opts[:hide_single] || Application.get_env(:scrivener_html, :hide_single, false)
+  #     )
 
-    link_fun = opts[:link_fun] || Application.get_env(:scrivener_html, :link_fun, &link/2)
+  #   link_fun = opts[:link_fun] || Application.get_env(:scrivener_html, :link_fun, &PhoenixHTMLHelpers.Link.link/2)
 
-    merged_opts = Keyword.merge(@defaults, opts)
+  #   merged_opts = Keyword.merge(@defaults, opts)
 
-    path = opts[:path] || find_path_fn(conn && paginator.entries, args)
-    params = Keyword.drop(opts, Keyword.keys(@defaults) ++ [:path, :hide_single, :link_fun])
+  #   path = opts[:path] || find_path_fn(conn && paginator.entries, args)
+  #   params = Keyword.drop(opts, Keyword.keys(@defaults) ++ [:path, :hide_single, :link_fun])
 
-    hide_single_result = opts[:hide_single] && paginator.total_pages < 2
+  #   hide_single_result = opts[:hide_single] && paginator.total_pages < 2
 
-    url_params = Keyword.drop(params, Keyword.keys(@raw_defaults))
+  #   url_params = Keyword.drop(params, Keyword.keys(@raw_defaults))
 
-    page_opts = %{
-      paginator: paginator,
-      url_params: url_params,
-      path: path,
-      args: [conn, merged_opts[:action]] ++ args,
-      page_param: merged_opts[:page_param],
-      link_fun: link_fun
-    }
+  #   page_opts = %{
+  #     paginator: paginator,
+  #     url_params: url_params,
+  #     path: path,
+  #     args: [conn, merged_opts[:action]] ++ args,
+  #     page_param: merged_opts[:page_param],
+  #     link_fun: link_fun
+  #   }
 
-    if hide_single_result do
-      Phoenix.HTML.raw(nil)
-    else
-      # Ensure ordering so pattern matching is reliable
-      _pagination_links(merged_opts[:view_style], params, page_opts)
-    end
-  end
+  #   if hide_single_result do
+  #     Phoenix.HTML.raw(nil)
+  #   else
+  #     # Ensure ordering so pattern matching is reliable
+  #     _pagination_links(merged_opts[:view_style], params, page_opts)
+  #   end
+  # end
 
-  def pagination_links(%Scrivener.Page{} = paginator),
-    do: pagination_links(nil, paginator, [], [])
+  # def pagination_links(%Scrivener.Page{} = paginator),
+  #   do: pagination_links(nil, paginator, [], [])
 
-  def pagination_links(%Scrivener.Page{} = paginator, opts),
-    do: pagination_links(nil, paginator, [], opts)
+  # def pagination_links(%Scrivener.Page{} = paginator, opts),
+  #   do: pagination_links(nil, paginator, [], opts)
 
-  def pagination_links(conn, %Scrivener.Page{} = paginator),
-    do: pagination_links(conn, paginator, [], [])
+  # def pagination_links(conn, %Scrivener.Page{} = paginator),
+  #   do: pagination_links(conn, paginator, [], [])
 
-  def pagination_links(conn, paginator, [{_, _} | _] = opts),
-    do: pagination_links(conn, paginator, [], opts)
+  # def pagination_links(conn, paginator, [{_, _} | _] = opts),
+  #   do: pagination_links(conn, paginator, [], opts)
 
-  def pagination_links(conn, paginator, [_ | _] = args),
-    do: pagination_links(conn, paginator, args, [])
+  # def pagination_links(conn, paginator, [_ | _] = args),
+  #   do: pagination_links(conn, paginator, args, [])
 
-  def find_path_fn(nil, _path_args), do: &Default.path/3
-  def find_path_fn([], _path_args), do: fn _, _, _ -> nil end
-  # Define a different version of `find_path_fn` whenever Phoenix is available.
-  if Code.ensure_loaded(Phoenix.Naming) do
-    def find_path_fn(entries, path_args) do
-      routes_helper_module =
-        Application.get_env(:scrivener_html, :routes_helper) ||
-          raise(
-            "Scrivener.HTML: Unable to find configured routes_helper module (ex. MyApp.Router.Helper)"
-          )
+  # def find_path_fn(nil, _path_args), do: &Default.path/3
+  # def find_path_fn([], _path_args), do: fn _, _, _ -> nil end
+  # # Define a different version of `find_path_fn` whenever Phoenix is available.
+  # if Code.ensure_loaded(Phoenix.Naming) do
+  #   def find_path_fn(entries, path_args) do
+  #     routes_helper_module =
+  #       Application.get_env(:scrivener_html, :routes_helper) ||
+  #         raise(
+  #           "Scrivener.HTML: Unable to find configured routes_helper module (ex. MyApp.Router.Helper)"
+  #         )
 
-      path = path_args |> Enum.reduce(name_for(List.first(entries), ""), &name_for/2)
+  #     path = path_args |> Enum.reduce(name_for(List.first(entries), ""), &name_for/2)
 
-      {path_fn, []} =
-        Code.eval_quoted(
-          quote do:
-                  &(unquote(routes_helper_module).unquote(:"#{path <> "_path"}") /
-                      unquote(length(path_args) + 3))
-        )
+  #     {path_fn, []} =
+  #       Code.eval_quoted(
+  #         quote do:
+  #                 &(unquote(routes_helper_module).unquote(:"#{path <> "_path"}") /
+  #                     unquote(length(path_args) + 3))
+  #       )
 
-      path_fn
-    end
-  else
-    def find_path_fn(_entries, _args), do: &(Default / 3)
-  end
+  #     path_fn
+  #   end
+  # else
+  #   def find_path_fn(_entries, _args), do: &(Default / 3)
+  # end
 
-  defp name_for(model, acc) do
-    "#{acc}#{if(acc != "", do: "_")}#{Phoenix.Naming.resource_name(model.__struct__)}"
-  end
+  # defp name_for(model, acc) do
+  #   "#{acc}#{if(acc != "", do: "_")}#{Phoenix.Naming.resource_name(model.__struct__)}"
+  # end
 
-  defp _pagination_links(style, _params, _opts)
-       when not (style in @view_styles) do
-    raise "Scrivener.HTML: View style #{inspect(style)} is not a valid view style. Please use one of #{
-            inspect(@view_styles)
-          }"
-  end
+  # defp _pagination_links(style, _params, _opts)
+  #      when not (style in @view_styles) do
+  #   raise "Scrivener.HTML: View style #{inspect(style)} is not a valid view style. Please use one of #{
+  #           inspect(@view_styles)
+  #         }"
+  # end
 
-  # Bootstrap implementation
-  defp _pagination_links(:bootstrap, params, page_opts) do
-    content_tag :nav do
-      content_tag :ul, class: "pagination" do
-        raw_pagination_links(page_opts.paginator, params)
-        |> Enum.map(&page(&1, page_opts, :bootstrap))
-      end
-    end
-  end
+  # # Bootstrap implementation
+  # defp _pagination_links(:bootstrap, params, page_opts) do
+  #   PhoenixHTMLHelpers.Tag.content_tag :nav do
+  #     PhoenixHTMLHelpers.Tag.content_tag :ul, class: "pagination" do
+  #       raw_pagination_links(page_opts.paginator, params)
+  #       |> Enum.map(&page(&1, page_opts, :bootstrap))
+  #     end
+  #   end
+  # end
 
-  # Bootstrap implementation
-  defp _pagination_links(:bootstrap_v4, params, page_opts) do
-    content_tag :nav, "aria-label": "Page navigation" do
-      content_tag :ul, class: "pagination" do
-        raw_pagination_links(page_opts.paginator, params)
-        |> Enum.map(&page(&1, page_opts, :bootstrap_v4))
-      end
-    end
-  end
+  # # Bootstrap implementation
+  # defp _pagination_links(:bootstrap_v4, params, page_opts) do
+  #   PhoenixHTMLHelpers.Tag.content_tag :nav, "aria-label": "Page navigation" do
+  #     PhoenixHTMLHelpers.Tag.content_tag :ul, class: "pagination" do
+  #       raw_pagination_links(page_opts.paginator, params)
+  #       |> Enum.map(&page(&1, page_opts, :bootstrap_v4))
+  #     end
+  #   end
+  # end
 
-  # Semantic UI implementation
-  defp _pagination_links(:semantic, params, page_opts) do
-    content_tag :div, class: "ui pagination menu" do
-      raw_pagination_links(page_opts.paginator, params)
-      |> Enum.map(&page(&1, page_opts, :semantic))
-    end
-  end
+  # # Semantic UI implementation
+  # defp _pagination_links(:semantic, params, page_opts) do
+  #   PhoenixHTMLHelpers.Tag.content_tag :div, class: "ui pagination menu" do
+  #     raw_pagination_links(page_opts.paginator, params)
+  #     |> Enum.map(&page(&1, page_opts, :semantic))
+  #   end
+  # end
 
-  # Foundation for Sites 6.x implementation
-  defp _pagination_links(:foundation, params, page_opts) do
-    content_tag :ul, class: "pagination", role: "pagination" do
-      raw_pagination_links(page_opts.paginator, params)
-      |> Enum.map(&page(&1, page_opts, :foundation))
-    end
-  end
+  # # Foundation for Sites 6.x implementation
+  # defp _pagination_links(:foundation, params, page_opts) do
+  #   PhoenixHTMLHelpers.Tag.content_tag :ul, class: "pagination", role: "pagination" do
+  #     raw_pagination_links(page_opts.paginator, params)
+  #     |> Enum.map(&page(&1, page_opts, :foundation))
+  #   end
+  # end
 
-  # Materialized implementation
-  defp _pagination_links(:materialize, params, page_opts) do
-    content_tag :ul, class: "pagination" do
-      raw_pagination_links(page_opts.paginator, params)
-      |> Enum.map(&page(&1, page_opts, :materialize))
-    end
-  end
+  # # Materialized implementation
+  # defp _pagination_links(:materialize, params, page_opts) do
+  #   PhoenixHTMLHelpers.Tag.content_tag :ul, class: "pagination" do
+  #     raw_pagination_links(page_opts.paginator, params)
+  #     |> Enum.map(&page(&1, page_opts, :materialize))
+  #   end
+  # end
 
-  # Bulma implementation
-  defp _pagination_links(:bulma, params, page_opts) do
-    content_tag :nav, class: "pagination is-centered" do
-      content_tag :ul, class: "pagination-list" do
-        raw_pagination_links(page_opts.paginator, params)
-        |> Enum.map(&page(&1, page_opts, :bulma))
-      end
-    end
-  end
+  # # Bulma implementation
+  # defp _pagination_links(:bulma, params, page_opts) do
+  #   PhoenixHTMLHelpers.Tag.content_tag :nav, class: "pagination is-centered" do
+  #     PhoenixHTMLHelpers.Tag.content_tag :ul, class: "pagination-list" do
+  #       raw_pagination_links(page_opts.paginator, params)
+  #       |> Enum.map(&page(&1, page_opts, :bulma))
+  #     end
+  #   end
+  # end
 
-  defp page({:ellipsis, true}, page_opts, :foundation) do
-    page({:ellipsis, ""}, page_opts, :foundation)
-  end
+  # defp page({:ellipsis, true}, page_opts, :foundation) do
+  #   page({:ellipsis, ""}, page_opts, :foundation)
+  # end
 
-  defp page({:ellipsis, true}, page_opts, style) do
-    page({:ellipsis, unquote(@raw_defaults[:ellipsis])}, page_opts, style)
-  end
+  # defp page({:ellipsis, true}, page_opts, style) do
+  #   page({:ellipsis, unquote(@raw_defaults[:ellipsis])}, page_opts, style)
+  # end
 
-  defp page({:ellipsis, text}, page_opts, :semantic) do
-    class = link_classes_for_style(page_opts.paginator, :ellipsis, :semantic) |> Enum.join(" ")
-    content_tag(:div, safe(text), class: class)
-  end
+  # defp page({:ellipsis, text}, page_opts, :semantic) do
+  #   class = link_classes_for_style(page_opts.paginator, :ellipsis, :semantic) |> Enum.join(" ")
+  #   PhoenixHTMLHelpers.Tag.content_tag(:div, safe(text), class: class)
+  # end
 
-  defp page({:ellipsis, text}, page_opts, style) do
-    paginator = page_opts.paginator
+  # defp page({:ellipsis, text}, page_opts, style) do
+  #   paginator = page_opts.paginator
 
-    content_tag(:li, class: li_classes_for_style(paginator, :ellipsis, style) |> Enum.join(" ")) do
-      style
-      |> ellipsis_tag
-      |> content_tag(safe(text),
-        class: link_classes_for_style(paginator, :ellipsis, style) |> Enum.join(" ")
-      )
-    end
-  end
+  #   PhoenixHTMLHelpers.Tag.content_tag(:li, class: li_classes_for_style(paginator, :ellipsis, style) |> Enum.join(" ")) do
+  #     style
+  #     |> ellipsis_tag
+  #     |> PhoenixHTMLHelpers.Tag.content_tag(safe(text),
+  #       class: link_classes_for_style(paginator, :ellipsis, style) |> Enum.join(" ")
+  #     )
+  #   end
+  # end
 
-  defp page(
-         {text, page_number},
-         %{
-           paginator: paginator,
-           url_params: url_params,
-           path: path,
-           args: args,
-           page_param: page_param,
-           link_fun: link_fun
-         },
-         :semantic
-       ) do
-    params_with_page =
-      url_params ++
-        case page_number > 1 do
-          true -> [{page_param, page_number}]
-          false -> []
-        end
+  # defp page(
+  #        {text, page_number},
+  #        %{
+  #          paginator: paginator,
+  #          url_params: url_params,
+  #          path: path,
+  #          args: args,
+  #          page_param: page_param,
+  #          link_fun: link_fun
+  #        },
+  #        :semantic
+  #      ) do
+  #   params_with_page =
+  #     url_params ++
+  #       case page_number > 1 do
+  #         true -> [{page_param, page_number}]
+  #         false -> []
+  #       end
 
-    to = apply(path, args ++ [params_with_page])
+  #   to = apply(path, args ++ [params_with_page])
 
-    if to do
-      if active_page?(paginator, page_number) do
-        content_tag(:a, safe(text),
-          class: link_classes_for_style(paginator, page_number, :semantic) |> Enum.join(" ")
-        )
-      else
-        link_fun.(safe(text),
-          to: to,
-          rel: Scrivener.HTML.SEO.rel(paginator, page_number),
-          class: li_classes_for_style(paginator, page_number, :semantic) |> Enum.join(" ")
-        )
-      end
-    else
-      content_tag(:a, safe(text),
-        class: li_classes_for_style(paginator, page_number, :semantic) |> Enum.join(" ")
-      )
-    end
-  end
+  #   if to do
+  #     if active_page?(paginator, page_number) do
+  #       PhoenixHTMLHelpers.Tag.content_tag(:a, safe(text),
+  #         class: link_classes_for_style(paginator, page_number, :semantic) |> Enum.join(" ")
+  #       )
+  #     else
+  #       link_fun.(safe(text),
+  #         to: to,
+  #         rel: Scrivener.HTML.SEO.rel(paginator, page_number),
+  #         class: li_classes_for_style(paginator, page_number, :semantic) |> Enum.join(" ")
+  #       )
+  #     end
+  #   else
+  #     PhoenixHTMLHelpers.Tag.content_tag(:a, safe(text),
+  #       class: li_classes_for_style(paginator, page_number, :semantic) |> Enum.join(" ")
+  #     )
+  #   end
+  # end
 
-  defp page(
-         {text, page_number},
-         %{
-           paginator: paginator,
-           url_params: url_params,
-           path: path,
-           args: args,
-           page_param: page_param,
-           link_fun: link_fun
-         },
-         style
-       ) do
-    params_with_page =
-      url_params ++
-        case page_number > 1 do
-          true -> [{page_param, page_number}]
-          false -> []
-        end
+  # defp page(
+  #        {text, page_number},
+  #        %{
+  #          paginator: paginator,
+  #          url_params: url_params,
+  #          path: path,
+  #          args: args,
+  #          page_param: page_param,
+  #          link_fun: link_fun
+  #        },
+  #        style
+  #      ) do
+  #   params_with_page =
+  #     url_params ++
+  #       case page_number > 1 do
+  #         true -> [{page_param, page_number}]
+  #         false -> []
+  #       end
 
-    content_tag :li, class: li_classes_for_style(paginator, page_number, style) |> Enum.join(" ") do
-      to = apply(path, args ++ [params_with_page])
-      class = link_classes_for_style(paginator, page_number, style) |> Enum.join(" ")
+  #       PhoenixHTMLHelpers.Tag.content_tag :li, class: li_classes_for_style(paginator, page_number, style) |> Enum.join(" ") do
+  #     to = apply(path, args ++ [params_with_page])
+  #     class = link_classes_for_style(paginator, page_number, style) |> Enum.join(" ")
 
-      if to do
-        if active_page?(paginator, page_number) do
-          content_tag(:a, safe(text), class: class)
-        else
-          link_fun.(safe(text),
-            to: to,
-            rel: Scrivener.HTML.SEO.rel(paginator, page_number),
-            class: class
-          )
-        end
-      else
-        style
-        |> blank_link_tag()
-        |> content_tag(safe(text), class: class)
-      end
-    end
-  end
+  #     if to do
+  #       if active_page?(paginator, page_number) do
+  #         PhoenixHTMLHelpers.Tag.content_tag(:a, safe(text), class: class)
+  #       else
+  #         link_fun.(safe(text),
+  #           to: to,
+  #           rel: Scrivener.HTML.SEO.rel(paginator, page_number),
+  #           class: class
+  #         )
+  #       end
+  #     else
+  #       style
+  #       |> blank_link_tag()
+  #       |> PhoenixHTMLHelpers.Tag.content_tag(safe(text), class: class)
+  #     end
+  #   end
+  # end
 
-  defp active_page?(%{page_number: page_number}, page_number), do: true
-  defp active_page?(_paginator, _page_number), do: false
+  # defp active_page?(%{page_number: page_number}, page_number), do: true
+  # defp active_page?(_paginator, _page_number), do: false
 
-  defp li_classes_for_style(_paginator, :ellipsis, :bootstrap), do: []
+  # defp li_classes_for_style(_paginator, :ellipsis, :bootstrap), do: []
 
-  defp li_classes_for_style(paginator, page_number, :bootstrap) do
-    if(paginator.page_number == page_number, do: ["active"], else: [])
-  end
+  # defp li_classes_for_style(paginator, page_number, :bootstrap) do
+  #   if(paginator.page_number == page_number, do: ["active"], else: [])
+  # end
 
-  defp li_classes_for_style(_paginator, :ellipsis, :bootstrap_v4), do: ["page-item"]
+  # defp li_classes_for_style(_paginator, :ellipsis, :bootstrap_v4), do: ["page-item"]
 
-  defp li_classes_for_style(paginator, page_number, :bootstrap_v4) do
-    if(paginator.page_number == page_number, do: ["active", "page-item"], else: ["page-item"])
-  end
+  # defp li_classes_for_style(paginator, page_number, :bootstrap_v4) do
+  #   if(paginator.page_number == page_number, do: ["active", "page-item"], else: ["page-item"])
+  # end
 
-  defp li_classes_for_style(_paginator, :ellipsis, :foundation), do: ["ellipsis"]
+  # defp li_classes_for_style(_paginator, :ellipsis, :foundation), do: ["ellipsis"]
 
-  defp li_classes_for_style(paginator, page_number, :foundation) do
-    if(paginator.page_number == page_number, do: ["current"], else: [])
-  end
+  # defp li_classes_for_style(paginator, page_number, :foundation) do
+  #   if(paginator.page_number == page_number, do: ["current"], else: [])
+  # end
 
-  defp li_classes_for_style(_paginator, :ellipsis, :semantic), do: ["ellipsis"]
+  # defp li_classes_for_style(_paginator, :ellipsis, :semantic), do: ["ellipsis"]
 
-  defp li_classes_for_style(paginator, page_number, :semantic) do
-    if(paginator.page_number == page_number, do: ["active", "item"], else: ["item"])
-  end
+  # defp li_classes_for_style(paginator, page_number, :semantic) do
+  #   if(paginator.page_number == page_number, do: ["active", "item"], else: ["item"])
+  # end
 
-  defp li_classes_for_style(_paginator, :ellipsis, :materialize), do: []
+  # defp li_classes_for_style(_paginator, :ellipsis, :materialize), do: []
 
-  defp li_classes_for_style(paginator, page_number, :materialize) do
-    if(paginator.page_number == page_number, do: ["active"], else: ["waves-effect"])
-  end
+  # defp li_classes_for_style(paginator, page_number, :materialize) do
+  #   if(paginator.page_number == page_number, do: ["active"], else: ["waves-effect"])
+  # end
 
-  defp li_classes_for_style(_paginator, :ellipsis, :bulma), do: []
-  defp li_classes_for_style(_paginator, _page_number, :bulma), do: []
+  # defp li_classes_for_style(_paginator, :ellipsis, :bulma), do: []
+  # defp li_classes_for_style(_paginator, _page_number, :bulma), do: []
 
-  defp link_classes_for_style(_paginator, :ellipsis, :semantic), do: ["disabled", "item"]
-  defp link_classes_for_style(_paginator, :ellipsis, :materialize), do: []
-  defp link_classes_for_style(_paginator, :ellipsis, :bulma), do: ["pagination-ellipsis"]
-  defp link_classes_for_style(_paginator, _page_number, :bootstrap), do: []
-  defp link_classes_for_style(_paginator, _page_number, :bootstrap_v4), do: ["page-link"]
-  defp link_classes_for_style(_paginator, _page_number, :foundation), do: []
+  # defp link_classes_for_style(_paginator, :ellipsis, :semantic), do: ["disabled", "item"]
+  # defp link_classes_for_style(_paginator, :ellipsis, :materialize), do: []
+  # defp link_classes_for_style(_paginator, :ellipsis, :bulma), do: ["pagination-ellipsis"]
+  # defp link_classes_for_style(_paginator, _page_number, :bootstrap), do: []
+  # defp link_classes_for_style(_paginator, _page_number, :bootstrap_v4), do: ["page-link"]
+  # defp link_classes_for_style(_paginator, _page_number, :foundation), do: []
 
-  defp link_classes_for_style(paginator, page_number, :semantic) do
-    if(paginator.page_number == page_number, do: ["active", "item"], else: ["item"])
-  end
+  # defp link_classes_for_style(paginator, page_number, :semantic) do
+  #   if(paginator.page_number == page_number, do: ["active", "item"], else: ["item"])
+  # end
 
-  defp link_classes_for_style(_paginator, _page_number, :materialize), do: []
+  # defp link_classes_for_style(_paginator, _page_number, :materialize), do: []
 
-  defp link_classes_for_style(paginator, page_number, :bulma) do
-    if(paginator.page_number == page_number,
-      do: ["pagination-link", "is-current"],
-      else: ["pagination-link"]
-    )
-  end
+  # defp link_classes_for_style(paginator, page_number, :bulma) do
+  #   if(paginator.page_number == page_number,
+  #     do: ["pagination-link", "is-current"],
+  #     else: ["pagination-link"]
+  #   )
+  # end
 
-  defp ellipsis_tag(:semantic), do: :div
-  defp ellipsis_tag(_), do: :span
+  # defp ellipsis_tag(:semantic), do: :div
+  # defp ellipsis_tag(_), do: :span
 
-  defp blank_link_tag(:foundation), do: :span
-  defp blank_link_tag(_), do: :a
+  # defp blank_link_tag(:foundation), do: :span
+  # defp blank_link_tag(_), do: :a
 
-  @doc """
-  Returns the raw data in order to generate the proper HTML for pagination links. Data
-  is returned in a `{text, page_number}` format where `text` is intended to be the text
-  of the link and `page_number` is the page it should go to. Defaults are already supplied
-  and they are as follows:
+  # @doc """
+  # Returns the raw data in order to generate the proper HTML for pagination links. Data
+  # is returned in a `{text, page_number}` format where `text` is intended to be the text
+  # of the link and `page_number` is the page it should go to. Defaults are already supplied
+  # and they are as follows:
 
-      #{inspect(@raw_defaults)}
+  #     #{inspect(@raw_defaults)}
 
-  `distance` must be a positive non-zero integer or an exception is raised. `next` and `previous` should be
-  strings but can be anything you want as long as it is truthy, falsey values will remove
-  them from the output. `first` and `last` are only booleans, and they just include/remove
-  their respective link from output. An example of the data returned:
+  # `distance` must be a positive non-zero integer or an exception is raised. `next` and `previous` should be
+  # strings but can be anything you want as long as it is truthy, falsey values will remove
+  # them from the output. `first` and `last` are only booleans, and they just include/remove
+  # their respective link from output. An example of the data returned:
 
-      iex> Scrivener.HTML.raw_pagination_links(%{total_pages: 10, page_number: 5})
-      [{"<<", 4}, {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5}, {6, 6}, {7, 7}, {8, 8}, {9, 9}, {10, 10}, {">>", 6}]
-      iex> Scrivener.HTML.raw_pagination_links(%{total_pages: 20, page_number: 10}, first: ["←"], last: ["→"])
-      [{"<<", 9}, {["←"], 1}, {:ellipsis, {:safe, "&hellip;"}}, {5, 5}, {6, 6},{7, 7}, {8, 8}, {9, 9}, {10, 10}, {11, 11}, {12, 12}, {13, 13}, {14, 14},{15, 15}, {:ellipsis, {:safe, "&hellip;"}}, {["→"], 20}, {">>", 11}]
+  #     iex> Scrivener.HTML.raw_pagination_links(%{total_pages: 10, page_number: 5})
+  #     [{"<<", 4}, {1, 1}, {2, 2}, {3, 3}, {4, 4}, {5, 5}, {6, 6}, {7, 7}, {8, 8}, {9, 9}, {10, 10}, {">>", 6}]
+  #     iex> Scrivener.HTML.raw_pagination_links(%{total_pages: 20, page_number: 10}, first: ["←"], last: ["→"])
+  #     [{"<<", 9}, {["←"], 1}, {:ellipsis, {:safe, "&hellip;"}}, {5, 5}, {6, 6},{7, 7}, {8, 8}, {9, 9}, {10, 10}, {11, 11}, {12, 12}, {13, 13}, {14, 14},{15, 15}, {:ellipsis, {:safe, "&hellip;"}}, {["→"], 20}, {">>", 11}]
 
-  Simply loop and pattern match over each item and transform it to your custom HTML.
-  """
+  # Simply loop and pattern match over each item and transform it to your custom HTML.
+  # """
   def raw_pagination_links(paginator, options \\ []) do
     options = Keyword.merge(@raw_defaults, options)
 
@@ -591,19 +589,19 @@ defmodule Scrivener.HTML do
     list
   end
 
-  defp safe({:safe, _string} = whole_string) do
-    whole_string
-  end
+  # defp safe({:safe, _string} = whole_string) do
+  #   whole_string
+  # end
 
-  defp safe(string) when is_binary(string) do
-    string
-  end
+  # defp safe(string) when is_binary(string) do
+  #   string
+  # end
 
-  defp safe(string) do
-    string
-    |> to_string()
-    |> raw()
-  end
+  # defp safe(string) do
+  #   string
+  #   |> to_string()
+  #   |> then()
+  # end
 
   def defaults(), do: @defaults
 end

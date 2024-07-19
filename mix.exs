@@ -47,10 +47,10 @@ defmodule ScrivenerHtml.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [
-      {:scrivener, "~> 1.2 or ~> 2.0"},
-      {:phoenix_html, "~> 4.0"},
-      {:phoenix_html_helpers, "~> 1.0"},
-      {:phoenix, "~> 1.7.0", optional: true},
+      {:scrivener, "~> 2.0"},
+      # {:phoenix_html, "~> 4.0"},
+      # {:phoenix_html_helpers, "~> 1.0"},
+      # {:phoenix, "~> 1.7.0", optional: true},
       {:plug, "~> 1.1"},
       {:ex_doc, "~> 0.19", only: :dev},
       {:earmark, "~> 1.1", only: :dev}
